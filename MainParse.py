@@ -1,4 +1,5 @@
 from Config import Config
+from do import do
 from PredictMap import PredictMap
 from TextParse import TextParse
 
@@ -11,9 +12,10 @@ class MainParse:
     parse_result_counter = 0  # 语法分析输出结果的计数器
 
     @staticmethod
-    def DoParse():
+    def DoParse(file):
+        do(file)
         # 词法分析的输入
-        file_path = "D:\python\pythonProject\\file"
+        file_path = "D:\python\pythonProject\output\\file"
         MainParse.parse_lexical_output_from_file(file_path)
         MainParse.symbol_stack = []
         MainParse.parse_result_stack = []
