@@ -4,7 +4,6 @@
 文法左侧: compUnit	文法右侧: [$]
 文法左侧: decl	文法右侧: [constDecl]
 文法左侧: decl	文法右侧: [varDecl]
-文法左侧: decl	文法右侧: [structDecl]
 文法左侧: constDecl	文法右侧: [const, bType, constDef, argConst, ;]
 文法左侧: argConst	文法右侧: [,, constDef, argConst]
 文法左侧: argConst	文法右侧: [$]

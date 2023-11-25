@@ -43,7 +43,7 @@ funcFParams	int, struct
 argFunctionF	,
 funcFParam	int, struct
 block	{
-blockItem	const, struct, ;, {, return, int, +, -, !, Ident, (, INT
+blockItem	const, ;, {, return, struct, int, +, -, !, Ident, (, INT
 stmt	;, {, return, +, -, !, Ident, (, INT
 argExp	+, -, !, Ident, (, INT
 exp	+, -, !, Ident, (, INT

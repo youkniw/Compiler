@@ -18,7 +18,7 @@ argFunctionF	), #
 funcFParam	,, ), #
 block	const, struct, void, int, ;, {, return, +, -, !, Ident, (, INT, }, #
 blockItem	}, #
-stmt	const, struct, ;, {, return, int, +, -, !, Ident, (, INT, }, #
+stmt	const, ;, {, return, struct, int, +, -, !, Ident, (, INT, }, #
 argExp	;, #
 exp	,, ;, ), #
 lVal	#

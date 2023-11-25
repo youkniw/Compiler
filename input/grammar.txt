@@ -4,7 +4,6 @@ compUnit -> funcDef compUnit
 compUnit -> $
 decl -> constDecl
 decl -> varDecl
-decl->structDecl
 constDecl -> const bType constDef argConst ;
 argConst -> , constDef argConst
 argConst -> $
