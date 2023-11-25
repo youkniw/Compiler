@@ -4,16 +4,16 @@ from TextParse import TextParse
 
 
 class MainParse:
-    predict_map = {}    # 预测表
-    input_str = []   # 输入串, 词法分析的结果
-    symbol_stack = []    # 符号栈
-    parse_result_stack = []    # 语法分析输出展示的结果
-    parse_result_counter = 0   # 语法分析输出结果的计数器
+    predict_map = {}  # 预测表
+    input_str = []  # 输入串, 词法分析的结果
+    symbol_stack = []  # 符号栈
+    parse_result_stack = []  # 语法分析输出展示的结果
+    parse_result_counter = 0  # 语法分析输出结果的计数器
 
     @staticmethod
     def DoParse():
         # 词法分析的输入
-        file_path="D:\python\pythonProject\\file"
+        file_path = "D:\python\pythonProject\\file"
         MainParse.parse_lexical_output_from_file(file_path)
         MainParse.symbol_stack = []
         MainParse.parse_result_stack = []
@@ -34,13 +34,11 @@ class MainParse:
         try:
             with open(Config.lexiconMiddleResult, 'w') as out:
                 for s in MainParse.input_str:
-
                     # 假设 s 是一个元组，例如 ('IDN', 'a')
                     token_type, token_value = s
                     out.write(f"{token_type} <{token_value}>\n")  # 格式化字符串
         except IOError as e:
             print(f"写入文件错误: {e}")
-
 
     @staticmethod
     def parse_lexical_output_from_file(file_path):
@@ -51,9 +49,10 @@ class MainParse:
 
                     token_info = parts[1].strip('<>').split(',')
                     if len(token_info) >= 2:
+
                         token_type = token_info[0]
-                        if(token_type==""):
-                            token_type=","
+                        if token_type == "":
+                            token_type = ","
                         token_value = parts[0]
                         MainParse.input_str.append((token_type, token_value))
 
@@ -213,4 +212,3 @@ class MainParse:
                     out.write(s + "\n")
         except Exception as e:
             print(e)
-

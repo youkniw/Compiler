@@ -87,6 +87,8 @@ class TextParse:
         try:
             with open(Config.grammarPath, 'r') as file:
                 for line in file:
+                    if not line.strip():  # 检查是否为空白行
+                        continue  # 跳过空白行
                     left, right = line.strip().split("->")
                     formula = Formula(left.strip(), right.strip().split(" "))
                     TextParse.formulas.append(formula)
