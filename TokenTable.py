@@ -19,3 +19,4 @@ class TokenTable:
                         f.write(f"{token.getLexeme()}   <{token.getTokenType()},{token.getTokenNum()}>")
         except Exception as e:
             print(e)
+        return enumerate(self.tokens)

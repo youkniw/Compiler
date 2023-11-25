@@ -10,6 +10,10 @@ b   <Ident,b>
 void   <void,2>
 my_func   <Ident,my_func>
 (   <(,22>
+struct   <struct,6>
+a   <Ident,a>
+b   <Ident,b>
+,   <,,27>
 int   <int,1>
 a   <Ident,a>
 ,   <,,27>
@@ -28,9 +32,9 @@ b   <Ident,b>
 ;   <;,26>
 }   <},25>
 }   <},25>
-structa   <Ident,structa>
+a   <Ident,a>
 ,   <,,27>
-structb   <Ident,structb>
+b   <Ident,b>
 ;   <;,26>
 int   <int,1>
 a   <Ident,a>

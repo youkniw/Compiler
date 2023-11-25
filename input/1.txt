@@ -2,11 +2,11 @@ struct MutationBlock {
 	int a;
 	int b;
 
-	void my_func (int a, int b, struct MutationBlock ccc) {
+	void my_func (struct a b,int a , int b, struct MutationBlock ccc) {
 		return a+b;
 	}
 
-} structa, structb;
+} a, b;
 
 int a=3;
 int b=1;

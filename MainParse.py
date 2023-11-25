@@ -1,7 +1,6 @@
 from Config import Config
 from PredictMap import PredictMap
 from TextParse import TextParse
-from TextParseInput import TextParseInput
 
 
 class MainParse:
