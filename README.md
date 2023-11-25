@@ -15,6 +15,7 @@ compiler
         |- 测试文件
         |- ...
     |- output
+        |- file.txt
         |- First集合.txt
         |- Follow集合.txt
         |- 分析表.txt
@@ -26,17 +27,17 @@ compiler
         |- gra.tsv
         |- lex.tsv
     |- src
-        |- Config.java
-        |- TextLexicon.java
-        |- TextLexiconInput.java
-        |- MainLexicon.java
-        |- FirstTable.java
-        |- FollowTable.java
-        |- PredictMap.java
-        |- TextParse.java
-        |- TextParseInput.java
-        |- MainParse.java
-        |- Main.java
+        |- Config.py
+        |- TextLexicon.py
+        |- TextLexiconInput.py
+        |- MainLexicon.py
+        |- FirstTable.py
+        |- FollowTable.py
+        |- PredictMap.py
+        |- TextParse.py
+        |- TextParseInput.py
+        |- MainParse.py
+        |- Main.py
     |- README.md
 ```
 
@@ -594,22 +595,17 @@ public static void DoLex() {
 
 Formula 是表示文法的类，其中的left字段表示文法的左值，right表示文法的右值。有一个初始化方法，和两个gettr方法。
 
-```java
-class Formula {
-    String left;
-    String[] right;
-    public Formula(String left, String[] right){
-        this.left = left;
-        this.right = right;
-    }
+```python
+class Formula:
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
 
-    public String[] returnRights(){
-        return right;
-    }
+    def returnRights(self):
+        return self.right
 
-    public String returnLeft(){
-        return left;
-    }
+    def returnLeft(self):
+        return self.left
 }
 ```
 
@@ -617,184 +613,141 @@ TextParse 类是语法分析类，主要的工作就是根据语法规则来解�
 
 setFormulas() 这个方法用于从文法文件中解析出文法规则。解析的规则如下 left -> []right。具体代码如下：
 
-```java
-public static void setFormulas() {
-        try {
-            File file = new File(Config.grammarPath);
-            RandomAccessFile randomfile = new RandomAccessFile(file, "r");
-            String line;
-            String left;
-            String right;
-            Formula formula;
-            while ((line=randomfile.readLine())!=null) {
-//                System.out.println(line);
-//                System.out.println("split: " + Arrays.toString(line.split("->")));
-                left = line.split("->")[0].trim();
-                right = line.split("->")[1].trim();    // 将右侧所有的值都算进去
-                formula = new Formula(left, right.split(" ")); // 根据空格分离右侧的值
-                formulas.add(formula);
-            }
-            randomfile.close();
-        } catch (Exception e) {
-            // TODO: handle exception
-            e.printStackTrace();
-        }
-    }
+```python
+    def setFormulas():
+        try:
+            with open(Config.grammarPath, 'r') as file:
+                for line in file:
+                    if not line.strip():  # 检查是否为空白行
+                        continue  # 跳过空白行
+                    left, right = line.strip().split("->")
+                    formula = Formula(left.strip(), right.strip().split(" "))
+                    TextParse.formulas.append(formula)
+        except Exception as e:
+            print(e)
 ```
 
-解析文法中的非终结符，并将其存储到 ArrayList< String > 中。因为文法中的非终结符就是文法左侧的全部符号，只需要统计左侧就可以了。
+解析文法中的非终结符，并将其存储。因为文法中的非终结符就是文法左侧的全部符号，只需要统计左侧就可以了。
 
-```java
-    // 解析文法中的非终结符，并设置
-    // 非终结符在文法中就是所有的left
-    static void setNonTerminals() {
-        for (Formula formula : formulas) {
-            if (nonTerminals.contains(formula.left)) {
-                continue;
-            } else {
-                nonTerminals.add(formula.left);
-            }
-        }
-    }
+```python
+    def setNonTerminals():
+        # 解析文法中的非终结符
+        for formula in TextParse.formulas:
+            if formula.left not in TextParse.nonTerminals:
+                TextParse.nonTerminals.append(formula.left)
+
 ```
 
-解析文法中的终结符，并将其存储到 ArrayList < String > 中。文法中的终结符是文法中全部的符号去掉终结符。
+解析文法中的终结符，并将其存储。文法中的终结符是文法中全部的符号去掉终结符。
 
-```java
-// 生成终结符
-    static void setTerminals() {
-        for (Formula formula : formulas) {
-            String[] rights = formula.returnRights();
-            // 从右侧去掉非终结符，剩下的就是终结符
-            for (String s : rights) {
-                // 去掉非终结符和空
-                if (nonTerminals.contains(s) || s.equals("$")) {
-                    continue;
-                } else { // 剩下的就是终结符
-                    terminals.add(s);
-                }
-            }
-        }
-    }
+```python
+    def setTerminals():
+        for formula in TextParse.formulas:
+            rights = formula.returnRights()  # 在 Python 中，right 已经是一个列表
+            for s in rights:
+                if s not in TextParse.nonTerminals and s != "$":
+                        TextParse.terminals.append(s)
 ```
 
 ### 2. 构造 First 集合
 
 根据解析出的文法，终结符，非终结符来推导出 First 集合。根据以下算法来构造 First 集合。
 
-```java
+```python
 // 生成 First 集合
-static void setFirsts() {
-    FirstTable.setFirst(formulas,terminals,nonTerminals,firsts);
-}
+    def setFirsts():
+        FirstTable.FirstTable.setFirst(TextParse.formulas, TextParse.terminals, TextParse.nonTerminals,
+                                       TextParse.firsts)
+
 ```
 
-- 使用 HashMap 来存储 First 集合，Key 值是符号，Value 值是ArrayList< String> ，存储着 Key 的 First 集合中所有元素。
+- 使用 字典 来存储 First 集合，Key 值是符号，Value 值是元组 ，存储着 Key 的 First 集合中所有元素。
 
 - 全部终结符号的 First 集合就是终结符本身。
 
-- 将全部非终结符都注册一个 Map，方便后序代码。
+- 将全部非终结符都注册一个字典，方便后序代码。
 
-- 遍历文法右侧的每一个符号的First集合，然后将该符号的First集合去掉空加入到左侧文法的First集合中。因为 Java 是按照引用来传递的，这个过程就可以看作一个递归过程。
+- 遍历文法右侧的每一个符号的First集合，然后将该符号的First集合去掉空加入到左侧文法的First集合中。这个过程就可以看作一个递归过程。
 
 
-```java
-public class FirstTable {
-    static ArrayList<Formula> formulas;
-    static ArrayList<String> terminals;
-    static ArrayList<String> nonTerminals;
-    static HashMap<String, ArrayList<String>> firsts;
+```python
+class FirstTable:
+    formulas = []
+    terminals = []
+    nonTerminals = []
+    firsts = {}
 
-    static void setFirst(ArrayList<Formula> _formulas, ArrayList<String> _terminals,
-                         ArrayList<String> _nonTerminals, HashMap<String, ArrayList<String>> _firsts) {
-        formulas = _formulas;
-        terminals = _terminals;
-        nonTerminals = _nonTerminals;
-        firsts = _firsts;
+    @staticmethod
+    def setFirst(_formulas, _terminals, _nonTerminals, _firsts):
+        FirstTable.formulas = _formulas
+        FirstTable.terminals = _terminals
+        FirstTable.nonTerminals = _nonTerminals
+        FirstTable.firsts = _firsts
 
-        // 终结符全部求出first集
-        ArrayList<String> first;
-        for (String terminal : terminals) {
-            first = new ArrayList<String>();
-            first.add(terminal);
-            firsts.put(terminal, first);
-        }
-        // 给所有非终结符注册一下
-        for (String nonterminal : nonTerminals) {
-            first = new ArrayList<String>();
-            firsts.put(nonterminal, first);
-        }
+        # 初始化终结符的 First 集合
+        for terminal in FirstTable.terminals:
+            FirstTable.firsts[terminal] = [terminal]
 
-        boolean flag;
-        while (true) {
-            flag = true;
-            String left;
-            String right;
-            String[] rights;
-            // 遍历所有文法
-            for (Formula formula : formulas) {
-                left = formula.returnLeft();
-                rights = formula.returnRights();
-                // 每个文法的右侧
-                for (String s : rights) {
-                    right = s;
-                    // oneOfRight是否存在，遇到空怎么办
-                    if (!right.equals("$")) {   // 右侧的字符串不为空（任意一个都不为空）
-                        // 遍历每一个右侧字符串的First集合，即 First(右侧字符串)
-                        // 这个就类似于一个递归
-                        for (int l = 0; l < firsts.get(right).size(); l++) {
-                            // First(left) 包括了 First(oneOfRights)
-                            if (firsts.get(left).contains(firsts.get(right).get(l))) {
-                                continue;
-                            } else {
-                                // 不包括, 就加入
-                                firsts.get(left).add(firsts.get(right).get(l));
-                                flag = false;
-                            }
-                        }
-                    }
-                    // OneOfRights -> $
-                    if (isCanBeNull(formulas, right)) {
-                        continue;
-                    } else {
-                        break;
-                    }
-                }
-            }
-            if (flag) {
-                break;
-            }
-        }
+        # 为所有非终结符注册空 First 集合
+        for nonTerminals in FirstTable.nonTerminals:
+            FirstTable.firsts[nonTerminals] = []
 
-    // 判断是否产生$
-    static boolean isCanBeNull(ArrayList<Formula> formulas, String symbol){
-        String[] rights;
-        // 遍历每一个文法
-        for (Formula formula : formulas) {
-            // 找到产生式
-            if (formula.returnLeft().equals(symbol)) {
-                // symbol -> [rights]
-                rights = formula.returnRights();
-                // symbol -> $
-                if (rights[0].equals("$")) {    // 第一个就是$, 即类似于 E -> $
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-}
+        # 计算 First 集合
+        while True:
+            flag = True
+            for formula in FirstTable.formulas:
+                left = formula.returnLeft()
+                rights = formula.returnRights()
+
+                for right in rights:
+                    if right != "$":
+                        for item in FirstTable.firsts[right]:
+                            if item not in FirstTable.firsts[left]:
+                                FirstTable.firsts[left].append(item)
+                                flag = False
+
+                    if not FirstTable.isCanBeNull(FirstTable.formulas,right):
+                        break
+
+            if flag:
+                break
+
+    @staticmethod
+    def recursion(cur):
+        if cur in FirstTable.terminals:
+            return FirstTable.firsts[cur]
+
+        if len(FirstTable.firsts[cur]) != 0:
+            return FirstTable.firsts[cur]
+
+        for formula in FirstTable.formulas:
+            if formula.returnLeft() == cur:
+                first_right = formula.returnRights()[0]
+                tmp = FirstTable.recursion(first_right)
+                for s in tmp:
+                    if s not in FirstTable.firsts[cur]:
+                        FirstTable.firsts[cur].append(s)
+        return FirstTable.firsts[cur]
+
+    @staticmethod
+    def isCanBeNull(formulas,symbol):
+        for formula in formulas:
+            if formula.returnLeft() == symbol:
+                rights = formula.returnRights()
+                if rights[0] == "$":
+                    return True
+        return False
 ```
 
 ### 3. 构造 Follow 集合
 
 根据解析出的文法，终结符，非终结符。通过以下算法来推导出 Follow 集合。
 
-```java
-   // 生成 Follow 集合
-   static void setFollows() {
-        FollowTable.setFollow(formulas,terminals,nonTerminals,firsts,follows);
-   }
+```python
+       def setFollows():
+        FollowTable.FollowTable.setFollow(TextParse.formulas, TextParse.terminals, TextParse.nonTerminals,
+                                          TextParse.firsts, TextParse.follows)
+
 ```
 
 - 将文法开始符号 program 置于 Follow(program)。
@@ -804,117 +757,76 @@ public class FirstTable {
 - 将文法左侧的 Follow 集合加入到文法右侧最后一个 First 集合中没有空的符号的 Follow 集合中。
 
 
-```java
-public class FollowTable {
-    static void setFollow(ArrayList<Formula> formulas, ArrayList<String> terminals,
-                          ArrayList<String> nonTerminals, HashMap<String, ArrayList<String>> firsts,
-                          HashMap<String, ArrayList<String>> follows) {
-        // 所有非终结符的follow集初始化一下
-        ArrayList<String> follow;
-        for (String nonTerminal : nonTerminals) {
-            follow = new ArrayList<String>();
-            follows.put(nonTerminal, follow);
-        }
-        // 将#加入到follow(S)中
-//        follows.get("S").add("#");  // 开始文法的入口必须是S
-        follows.get(Config.initSymbol).add("#");
+```python
+from Config import Config
 
-        boolean flag;
-        boolean fab;
-        while (true) {
-            flag = true;
-            // 循环
-            for (Formula formula : formulas) {
-                String left;
-                String right;
-                String[] rights;
-                rights = formula.returnRights();
-                for (int j = 0; j < rights.length; j++) {
-                    right = rights[j];
 
-                    // 非终结符
-                    if (nonTerminals.contains(right)) {
-                        fab = true;
-                        for (int k = j + 1; k < rights.length; k++) {
+class FollowTable:
+    @staticmethod
+    def setFollow(formulas, terminals, non_terminals, firsts, follows):
+        # 初始化所有非终结符的 Follow 集合
+        for non_terminal in non_terminals:
+            follows[non_terminal] = []
 
-                            // 查找first集
-                            for (int v = 0; v < firsts.get(rights[k]).size(); v++) {
-                                // 将后一个元素的first集加入到前一个元素的follow集中
-                                if (follows.get(right).contains(firsts.get(rights[k]).get(v))) {
-                                    continue;
-                                } else {
-                                    follows.get(right).add(firsts.get(rights[k]).get(v));
-                                    flag = false;
-                                }
-                            }
-                            if (isCanBeNull(formulas, rights[k])) {
-                                continue;
-                            } else {
-                                fab = false;
-                                break;
-                            }
-                        }
-                        if (fab) {
-                            left = formula.returnLeft();
-                            for (int p = 0; p < follows.get(left).size(); p++) {
-                                if (follows.get(right).contains(follows.get(left).get(p))) {
-                                    continue;
-                                } else {
-                                    follows.get(right).add(follows.get(left).get(p));
-                                    flag = false;
-                                }
-                            }
-                        }
-                    }
+        # 将 '#' 添加到起始符号的 Follow 集合中
+        follows[Config.initSymbol].append("#")
 
-                }
-            }
-            if(flag){
-                break;
-            }
-        }
+        while True:
+            flag = True
 
-        // 清除follow集中的#
-        String left;
-        for (String nonterminal : nonTerminals) {
-            left = nonterminal;
-            for (int v = 0; v < follows.get(left).size(); v++) {
-                if (follows.get(left).get(v).equals("#"))
-                    follows.get(left).remove(v);
-            }
-        }
+            for formula in formulas:
+                rights = formula.returnRights()
 
-        // -------------------
-        // 为Follow加上#
-        for (String notTerminal : nonTerminals) {
-            follows.get(notTerminal).add("#");
-        }
-        // -------------------
-    }
+                for j in range(len(rights)):
+                    right = rights[j]
 
-    // 判断是否产生$
-    static boolean isCanBeNull(ArrayList<Formula> formulas, String symbol){
-        String[] rights;
-        for (Formula formula : formulas) {
-            // 找到产生式
-            if (formula.returnLeft().equals(symbol)) {
-                rights = formula.returnRights();
-                if (rights[0].equals("$")) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-}
+                    if right in non_terminals:
+                        fab = True
+                        for k in range(j + 1, len(rights)):
+                            for v in firsts[rights[k]]:
+                                if v not in follows[right]:
+                                    follows[right].append(v)
+                                    flag = False
+
+                            if not FollowTable.is_can_be_null(formulas,rights[k]):
+                                fab = False
+                                break
+
+                        if fab:
+                            left = formula.returnLeft()
+                            for p in follows[left]:
+                                if p not in follows[right]:
+                                    follows[right].append(p)
+                                    flag = False
+
+            if flag:
+                break
+
+        # 清除 Follow 集合中的 '#'
+        for non_terminal in non_terminals:
+            follows[non_terminal] = [x for x in follows[non_terminal] if x != "#"]
+
+        # 为所有非终结符的 Follow 集合加上 '#'
+        for non_terminal in non_terminals:
+            if "#" not in follows[non_terminal]:
+                follows[non_terminal].append("#")
+
+    @staticmethod
+    def is_can_be_null(formulas, symbol):
+        for formula in formulas:
+            if formula.returnLeft() == symbol and formula.returnRights()[0] == "$":
+                return True
+        return False
+
 ```
 
 ### 4. 构造预测表
 
-```java
-    static void setPrediction() {
-        PredictMap.setPrediction(formulas,terminals,nonTerminals,firsts,follows,predictions);
-    }
+```python
+ def setPrediction():
+        PredictMap.setPrediction(TextParse.formulas, TextParse.terminals, TextParse.nonTerminals, TextParse.firsts,
+                                 TextParse.follows, TextParse.predictions)
+
 ```
 
 - 遍历每一个文法
@@ -924,59 +836,39 @@ public class FollowTable {
 - 如果左侧文法符号的 First 集合中包含空，则将文法左侧的 Follow 集合的每一个终结符作为横坐标，左侧符号作为纵坐标，填上这个文法。
 
 
-```java
-public class PredictMap {
-    static void setPrediction(ArrayList<Formula> formulas, ArrayList<String> terminals,
-                              ArrayList<String> nonTerminals, HashMap<String, ArrayList<String>> firsts,
-                              HashMap<String, ArrayList<String>> follows,
-                              HashMap<String, Formula> predictions) {
-        // (2)
-        for (Formula formula : formulas) {
-            // First(formula.right[0])
-            try {
-                if (formula.right[0].equals("$")) { // 类似于 value' -> $ 这种文法
-                    // First集合中First($)是不存在的
-                    // 遇到这种文法，直接跳过就行
-                    continue;
-                }
-                for (String terminalInFirsts : firsts.get(formula.right[0])) {
-                    // 空
-                    if (terminalInFirsts.equals("$")) {
-                        // Follow(formula.left)
-                        for (String terminalInFollows : follows.get(formula.left)) {
-                            predictions.put(getMapKey(terminalInFollows, formula.left),
-                                    new Formula(formula.left, new String[]{"$"}));
-                        }
-                    }
-                    // 不空
-                    // [Terminal, notTerminal] : formula
-                    predictions.put(getMapKey(terminalInFirsts, formula.left), formula);
-                }
-            } catch (Exception e) {
-                System.out.println("first结合中没有 key: " + formula.right[0]);
-                e.printStackTrace();
-            }
-        }
+```python
+from Formula import Formula
+class PredictMap:
+    @staticmethod
+    def setPrediction(formulas, terminals, non_terminals, firsts, follows, predictions):
+        # 第一部分
+        for formula in formulas:
+            if formula.right[0] == "$":
+                continue
+            try:
+                for terminal_in_firsts in firsts.get(formula.right[0]):
+                    if terminal_in_firsts == "$":
+                        for terminal_in_follows in follows.get(formula.left):
+                            key = PredictMap.get_map_key(terminal_in_follows, formula.left)
+                            predictions[key] = Formula(formula.left, ["$"])
+                    else:
+                        key = PredictMap.get_map_key(terminal_in_firsts, formula.left)
+                        predictions[key] = formula
+            except Exception as e:
+                print("First 集合中没有 key:", formula.right[0])
+                print(e)
 
-        // (3)
-        // E -> $
-        for (Formula formula : formulas) {
-            if (formula.returnRights()[0].equals("$")) {    // E -> $
-                for (String followElement : follows.get(formula.returnLeft())) { // Follow(E)
-                    // [FollowElement(E), E] : E - > $
-                    predictions.put(getMapKey(followElement, formula.returnLeft()), formula);
-                }
-            }
-        }
-    }
+        # 第二部分
+        for formula in formulas:
+            if formula.right[0] == "$":
+                for follow_element in follows.get(formula.left):
+                    key = PredictMap.get_map_key(follow_element, formula.left)
+                    predictions[key] = formula
 
-    // 以固定的格式产生分析表的 Key
-    static String getMapKey(String terminal, String nonTerminal) {
-        // i 为终结符，横坐标
-        // j 为非终结符，纵坐标
-        return  "{横坐标: " + terminal + " , " + "纵坐标: " + nonTerminal + "}";
-    }
-}
+    @staticmethod
+    def get_map_key(terminal, non_terminal):
+        return f"{{横坐标: {terminal}  纵坐标: {non_terminal}}}"
+
 ```
 
 ### 5. 语法分析
@@ -988,685 +880,224 @@ public class PredictMap {
 - 然后严格依照图中的遍历规则，来进行移进规约，直到 # 遇到 # 就结束。
 
 
-```java
-public class MainParse {
-    static HashMap<String, Formula> predictMap;    // 预测表
-    static ArrayList<String> input_str;   // 输入串, 词法分析的结果
-    static ArrayList<String> symbol_stack;    // 符号栈
-//    static ArrayList<String> parse_error_stack;    // 语法分析输出可能的错误结果
-    static ArrayList<String> parse_result_stack;    // 语法分析输出展示的结果
-    static int parse_result_counter; // 语法分析输出结果的计数器
-
-    // 入口函数
-    static void DoParse() {
-        input_str = TextParseInput.getLex_result_stack(); // 词法分析的输入
-        symbol_stack = new ArrayList<>();
-        parse_result_stack = new ArrayList<>();
-        parse_result_counter = 0;
-
-        TextParse.Do(); // 生成各种表，First，Follow，预测表
-        predictMap = TextParse.predictions; // 预测表
-
-        TextParse.writeAllIntoFile(); // 将语法分析开始前生成的所有表打印出来
-        writeLexiconMiddleResultIntoFile(); // 将词法分析的中间结果打印出来
-
-        parse();    // 开始语法分析
-
-        printParseResult();    // 打印语法分析结果
-    }
-
-    // 将词法分析传递给语法分析的中间结果打印出来
-    static void writeLexiconMiddleResultIntoFile() {
-        try {
-            BufferedWriter out = new BufferedWriter(new FileWriter(Config.lexiconMiddleResult));
-            out.write("词法分析的中间结果结果如下: --------------------\n");
-            out.write("总共有 " + input_str.size() + " 条数据\n");
-            out.write("\n");
-            for (String s : input_str) {
-                out.write(s + "\n");
-            }
-            out.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    // 利用预测表和词法分析的输入来解析
-    // 语法分析
-    static void parse() {
-        // ------
-        // 将 # 压入栈
-        symbol_stack.add("#");
-        input_str.add("#"); //输入串在最后也需要放 #
-        // ------
-
-        // 初始符号压入栈
-//        symbol_stack.add("S");
-        symbol_stack.add(Config.initSymbol);
-
-        String predictMapKey;   // PredictMap-Key
-//        String process="";
+```python
+from Config import Config
+from do import do
+from PredictMap import PredictMap
+from TextParse import TextParse
 
 
-        // 符号栈和输入串如果同时为0，那么语法分析结束
-//        while (symbol_stack.size()>0 && input_str.size()>0 ) {
-        while (true) {
-            parse_result_counter++; // 语法分析结果的计数器加一
-            if (symbol_stack.get(symbol_stack.size()-1).equals("#") && input_str.get(0).equals("#")) {
-                parse_result_stack.add(parse_result_counter + " "
-                        + "EOF" + "#"
-                        + "EOF" + " " + "accept");
-                break;
-            }
-            // 输入缓冲区与推导符号串第一个字符相等的话，删掉
-            try {
-                if(input_str.get(0).equals(symbol_stack.get(symbol_stack.size()-1))){
-                    // 语法分析的结果写入栈中
-                    parse_result_stack.add(parse_result_counter + " "
-                            + symbol_stack.get(symbol_stack.size()-1) + "#"
-                            + input_str.get(0) + " " + "move");
-                    input_str.remove(0);    // 输入字符移除第一个，类似于指针向后遍历
-                    symbol_stack.remove(symbol_stack.size()-1); // 符号栈移除栈顶
-                    continue;
-                }
-            } catch (Exception e) {
-                // TODO: handle exception
-                e.printStackTrace();
-            }
+class MainParse:
+    predict_map = {}  # 预测表
+    input_str = []  # 输入串, 词法分析的结果
+    symbol_stack = []  # 符号栈
+    parse_result_stack = []  # 语法分析输出展示的结果
+    parse_result_counter = 0  # 语法分析输出结果的计数器
 
-            // 匹配字符
-            predictMapKey = PredictMap.getMapKey(input_str.get(0), symbol_stack.get(symbol_stack.size()-1));
+    @staticmethod
+    def DoParse(file):
+        do(file)
+        # 词法分析的输入
+        file_path = "D:\python\pythonProject\output\\file"
+        MainParse.parse_lexical_output_from_file(file_path)
+        MainParse.symbol_stack = []
+        MainParse.parse_result_stack = []
+        MainParse.parse_result_counter = 0
 
-            // 能够找到匹配的
-            Formula formula = predictMap.get(predictMapKey);    // 找到文法
-            if (formula != null) {  // 文法不为空，为空报错
-                // 语法分析的结果写入栈中
-                parse_result_stack.add(parse_result_counter + " "
-                        + symbol_stack.get(symbol_stack.size()-1) + "#"
-                        + input_str.get(0) + " " + "reduction");
-                // 符号栈的最后一个元素如果是 #, 就不能删除了
-                if (symbol_stack.get(symbol_stack.size()-1).equals("#")) {
-                } else {
-                    symbol_stack.remove(symbol_stack.size()-1); // 删除符号栈中最后一个元素
-                }
-                String[] rights = formula.returnRights();   // 文法的右侧
-                if (rights[0].equals("$")) {    // E->$，不能压入空
-                    continue;
-                }
-                for (int i = rights.length-1; i >= 0; i--) {
-                    // 将文法右侧的非终结符反向压入栈中
-                    symbol_stack.add(rights[i]);
-                }
-            }
+        TextParse.Do()  # 生成各种表，First，Follow，预测表
+        MainParse.predict_map = TextParse.predictions  # 预测表
 
-            else {
-                // 语法分析的结果写入栈中
-                parse_result_stack.add(parse_result_counter + " "
-                        + symbol_stack.get(symbol_stack.size()-1) + "#"
-                        + input_str.get(0) + " " + "error");
-                return; // 遇到error直接返回
-            }
-        }
-    }
+        TextParse.writeAllIntoFile()  # 将语法分析开始前生成的所有表打印出来
+        MainParse.writeLexiconMiddleResultIntoFile()  # 将词法分析的中间结果打印出来
 
-    // 输出语法分析结果
-    static void printParseResult() {
-        System.out.println("开始输出语法分析结果: --------------------");
-        for (String s : parse_result_stack) {
-            System.out.println(s);
-        }
-        try {
-            BufferedWriter out = new BufferedWriter(new FileWriter(Config.parseResultPath));
-            for (String s : parse_result_stack) {
-                out.write(s + "\n");
-            }
-            out.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-}
-```
+        MainParse.parse()  # 开始语法分析
 
-## 三、输出的一些表
+        MainParse.printParseResult()  # 打印语法分析结果
 
-### 1. 文法
+    @staticmethod
+    def writeLexiconMiddleResultIntoFile():
+        try:
+            with open(Config.lexiconMiddleResult, 'w') as out:
+                for s in MainParse.input_str:
+                    # 假设 s 是一个元组，例如 ('IDN', 'a')
+                    token_type, token_value = s
+                    out.write(f"{token_type} <{token_value}>\n")  # 格式化字符串
+        except IOError as e:
+            print(f"写入文件错误: {e}")
 
-```
-文法解析结果如下: --------------------
-总共有 77 条数据
+    @staticmethod
+    def parse_lexical_output_from_file(file_path):
+        with open(file_path, 'r') as lexical_output:
+            for line in lexical_output:
+                parts = line.strip().split()
+                if len(parts) >= 2:
 
-文法左侧: program 文法右侧: [compUnit]
-文法左侧: compUnit 文法右侧: [decl, compUnit]
-文法左侧: compUnit 文法右侧: [funcDef, compUnit]
-文法左侧: compUnit 文法右侧: [$]
-文法左侧: decl 文法右侧: [constDecl]
-文法左侧: decl 文法右侧: [varDecl]
-文法左侧: constDecl 文法右侧: [const, bType, constDef, argConst, ;]
-文法左侧: argConst 文法右侧: [,, constDef, argConst]
-文法左侧: argConst 文法右侧: [$]
-文法左侧: constDef 文法右侧: [Ident, =, constInitVal]
-文法左侧: constInitVal 文法右侧: [constExp]
-文法左侧: varDecl 文法右侧: [bType, varDef, argVarDecl, ;]
-文法左侧: argVarDecl 文法右侧: [,, varDef, argVarDecl]
-文法左侧: argVarDecl 文法右侧: [$]
-文法左侧: varDef 文法右侧: [Ident, argVarDef]
-文法左侧: argVarDef 文法右侧: [=, initVal]
-文法左侧: argVarDef 文法右侧: [$]
-文法左侧: initVal 文法右侧: [exp]
-文法左侧: bType 文法右侧: [int]
-文法左侧: funcDef 文法右侧: [funcType, Ident, (, funcFParams, ), block]
-文法左侧: funcType 文法右侧: [void]
-文法左侧: funcFParams 文法右侧: [funcFParam, argFunctionF]
-文法左侧: funcFParams 文法右侧: [$]
-文法左侧: argFunctionF 文法右侧: [,, funcFParam, argFunctionF]
-文法左侧: argFunctionF 文法右侧: [$]
-文法左侧: funcFParam 文法右侧: [bType, Ident]
-文法左侧: block 文法右侧: [{, blockItem, }]
-文法左侧: blockItem 文法右侧: [decl, blockItem]
-文法左侧: blockItem 文法右侧: [stmt, blockItem]
-文法左侧: blockItem 文法右侧: [$]
-文法左侧: stmt 文法右侧: [exp, ;]
-文法左侧: stmt 文法右侧: [;]
-文法左侧: stmt 文法右侧: [block]
-文法左侧: stmt 文法右侧: [return, argExp, ;]
-文法左侧: argExp 文法右侧: [$]
-文法左侧: argExp 文法右侧: [exp]
-文法左侧: exp 文法右侧: [assignExp]
-文法左侧: lVal 文法右侧: [Ident]
-文法左侧: primaryExp 文法右侧: [(, exp, )]
-文法左侧: primaryExp 文法右侧: [number]
-文法左侧: number 文法右侧: [INT]
-文法左侧: unaryOp 文法右侧: [+]
-文法左侧: unaryOp 文法右侧: [-]
-文法左侧: unaryOp 文法右侧: [!]
-文法左侧: unaryExp 文法右侧: [unaryOp, unaryExp]
-文法左侧: unaryExp 文法右侧: [Ident, callFunc]
-文法左侧: callFunc 文法右侧: [(, funcRParams, )]
-文法左侧: callFunc 文法右侧: [$]
-文法左侧: unaryExp 文法右侧: [primaryExp]
-文法左侧: funcRParams 文法右侧: [funcRParam, argFunctionR]
-文法左侧: funcRParams 文法右侧: [$]
-文法左侧: argFunctionR 文法右侧: [,, funcRParam, argFunctionR]
-文法左侧: argFunctionR 文法右侧: [$]
-文法左侧: funcRParam 文法右侧: [exp]
-文法左侧: mulExp 文法右侧: [unaryExp, mulExpAtom]
-文法左侧: mulExpAtom 文法右侧: [*, unaryExp, mulExpAtom]
-文法左侧: mulExpAtom 文法右侧: [/, unaryExp, mulExpAtom]
-文法左侧: mulExpAtom 文法右侧: [%, unaryExp, mulExpAtom]
-文法左侧: mulExpAtom 文法右侧: [$]
-文法左侧: addExp 文法右侧: [mulExp, addExpAtom]
-文法左侧: addExpAtom 文法右侧: [+, mulExp, addExpAtom]
-文法左侧: addExpAtom 文法右侧: [-, mulExp, addExpAtom]
-文法左侧: addExpAtom 文法右侧: [$]
-文法左侧: relExp 文法右侧: [addExp, relExpAtom]
-文法左侧: relExpAtom 文法右侧: [<, addExp, relExpAtom]
-文法左侧: relExpAtom 文法右侧: [>, addExp, relExpAtom]
-文法左侧: relExpAtom 文法右侧: [<=, addExp, relExpAtom]
-文法左侧: relExpAtom 文法右侧: [>=, addExp, relExpAtom]
-文法左侧: relExpAtom 文法右侧: [$]
-文法左侧: eqExp 文法右侧: [relExp, eqExpAtom]
-文法左侧: eqExpAtom 文法右侧: [==, relExp, eqExpAtom]
-文法左侧: eqExpAtom 文法右侧: [!=, relExp, eqExpAtom]
-文法左侧: eqExpAtom 文法右侧: [$]
-文法左侧: assignExp 文法右侧: [eqExp, assignExpAtom]
-文法左侧: assignExpAtom 文法右侧: [=, eqExp, assignExpAtom]
-文法左侧: assignExpAtom 文法右侧: [$]
-文法左侧: constExp 文法右侧: [assignExp]
-```
+                    token_info = parts[1].strip('<>').split(',')
+                    if len(token_info) >= 2:
 
-### 2. 终结符
+                        token_type = token_info[0]
+                        if token_type == "":
+                            token_type = ","
+                        token_value = parts[0]
+                        MainParse.input_str.append((token_type, token_value))
+
+    @staticmethod
+    def parse():
+        MainParse.symbol_stack.append("#")
+        MainParse.input_str.append(("#", "#"))  # 添加类型和值的元组
+
+        MainParse.symbol_stack.append(Config.initSymbol)
+
+        while True:
+            MainParse.parse_result_counter += 1
+            current_token_type, current_token_value = MainParse.input_str[0]
+
+            if MainParse.symbol_stack[-1] == "#" and current_token_type == "#":
+                MainParse.parse_result_stack.append(
+                    f"{MainParse.parse_result_counter}\tEOF#EOF\taccept")
+                break
+
+            try:
+                if current_token_type == MainParse.symbol_stack[-1]:
+                    MainParse.parse_result_stack.append(
+                        f"{MainParse.parse_result_counter}\t"
+                        f"{MainParse.symbol_stack[-1]}#{current_token_value}\tmove")
+                    MainParse.input_str.pop(0)
+                    MainParse.symbol_stack.pop()
+                    continue
+            except Exception as e:
+                print(e)
+
+            predict_map_key = PredictMap.get_map_key(
+                current_token_type, MainParse.symbol_stack[-1])
+
+            formula = MainParse.predict_map.get(predict_map_key)
+            if formula is not None:
+                MainParse.parse_result_stack.append(
+                    f"{MainParse.parse_result_counter}\t"
+                    f"{MainParse.symbol_stack[-1]}#{current_token_value}\treduction")
+                if MainParse.symbol_stack[-1] != "#":
+                    MainParse.symbol_stack.pop()
+                rights = formula.returnRights()
+                if rights[0] != "$":
+                    for i in range(len(rights) - 1, -1, -1):
+                        MainParse.symbol_stack.append(rights[i])
+            else:
+                MainParse.parse_result_stack.append(
+                    f"{MainParse.parse_result_counter}\t"
+                    f"{MainParse.symbol_stack[-1]}#{current_token_value}\terror")
+                return
+
+    """
+    @staticmethod
+    def parse():
+
+        MainParse.symbol_stack.append("#")
+        MainParse.input_str.append("#")
+
+        MainParse.symbol_stack.append(Config.initSymbol)
+
+        while True:
+            MainParse.parse_result_counter += 1
+            if MainParse.symbol_stack[-1] == "#" and MainParse.input_str[0] == "#":
+                MainParse.parse_result_stack.append(
+                    f"{MainParse.parse_result_counter}\tEOF#EOF\taccept")
+                break
+
+            try:
+                if MainParse.input_str[0] == MainParse.symbol_stack[-1]:
+                    MainParse.parse_result_stack.append(
+                        f"{MainParse.parse_result_counter}\t"
+                        f"{MainParse.symbol_stack[-1]}#{MainParse.input_str[0]}\tmove")
+                    MainParse.input_str.pop(0)
+                    MainParse.symbol_stack.pop()
+                    continue
+            except Exception as e:
+                print(e)
+
+            predict_map_key = PredictMap.get_map_key(
+                MainParse.input_str[0], MainParse.symbol_stack[-1])
+
+            formula = MainParse.predict_map.get(predict_map_key)
+            if formula is not None:
+                MainParse.parse_result_stack.append(
+                    f"{MainParse.parse_result_counter}\t"
+                    f"{MainParse.symbol_stack[-1]}#{MainParse.input_str[0]}\treduction")
+                if MainParse.symbol_stack[-1] != "#":
+                    MainParse.symbol_stack.pop()
+                rights = formula.returnRights()
+                if rights[0] != "$":
+                    for i in range(len(rights) - 1, -1, -1):
+                        MainParse.symbol_stack.append(rights[i])
+            else:
+                MainParse.parse_result_stack.append(
+                    f"{MainParse.parse_result_counter}\t"
+                    f"{MainParse.symbol_stack[-1]}#{MainParse.input_str[0]}\terror")
+                return
+    """
+    """
+    @staticmethod
+    def parse():
+        MainParse.symbol_stack.append("#")
+        MainParse.input_str.append(("#", "#"))  # 添加类型和值的元组
+
+        MainParse.symbol_stack.append(Config.initSymbol)
+
+        while True:
+            MainParse.parse_result_counter += 1
+            current_token_type, current_token_value = MainParse.input_str[0]
+
+            if MainParse.symbol_stack[-1] == "#" and current_token_type == "#":
+                MainParse.parse_result_stack.append(
+                    f"{MainParse.parse_result_counter}\tEOF#EOF\taccept")
+                break
+
+            try:
+                if current_token_type == MainParse.symbol_stack[-1]:
+                    MainParse.parse_result_stack.append(
+                        f"{MainParse.parse_result_counter}\t"
+                        f"{MainParse.symbol_stack[-1]}#{current_token_value}\tmove")
+                    MainParse.input_str.pop(0)
+                    MainParse.symbol_stack.pop()
+                    continue
+            except Exception as e:
+                print(e)
+
+            predict_map_key = PredictMap.get_map_key(
+                current_token_type, MainParse.symbol_stack[-1])
+
+            formula = MainParse.predict_map.get(predict_map_key)
+            if formula is not None:
+                MainParse.parse_result_stack.append(
+                    f"{MainParse.parse_result_counter}\t"
+                    f"{MainParse.symbol_stack[-1]}#{current_token_value}\treduction")
+                if MainParse.symbol_stack[-1] != "#":
+                    MainParse.symbol_stack.pop()
+                rights = formula.returnRights()
+                if rights[0] != "$":
+                    for i in range(len(rights) - 1, -1, -1):
+                        MainParse.symbol_stack.append(rights[i])
+            else:
+                MainParse.parse_result_stack.append(
+                    f"{MainParse.parse_result_counter}\t"
+                    f"{MainParse.symbol_stack[-1]}#{current_token_value}\terror")
+                return
+    """
+
+    @staticmethod
+    def printParseResult():
+        # ...（打印语法分析结果的具体实现）
+        print("开始输出语法分析结果: --------------------")
+        for s in MainParse.parse_result_stack:
+            print(s)
+
+        try:
+            with open(Config.parseResultPath, 'w') as out:
+                for s in MainParse.parse_result_stack:
+                    out.write(s + "\n")
+        except Exception as e:
+            print(e)
 
 ```
-从文法中解析的终结符结果如下: --------------------
-总共有 45 条数据
 
-const
-;
-,
-Ident
-=
-;
-,
-Ident
-=
-int
-Ident
-(
-)
-void
-,
-Ident
-{
-}
-;
-;
-return
-;
-Ident
-(
-)
-INT
-+
--
-!
-Ident
-(
-)
-,
-*
-/
-%
-+
--
-<
->
-<=
->=
-==
-!=
-=
-```
-
-### 3. 非终结符
-
-```
-从文法中解析的非终结符结果如下: --------------------
-总共有 43 条数据
-
-program
-compUnit
-decl
-constDecl
-argConst
-constDef
-constInitVal
-varDecl
-argVarDecl
-varDef
-argVarDef
-initVal
-bType
-funcDef
-funcType
-funcFParams
-argFunctionF
-funcFParam
-block
-blockItem
-stmt
-argExp
-exp
-lVal
-primaryExp
-number
-unaryOp
-unaryExp
-callFunc
-funcRParams
-argFunctionR
-funcRParam
-mulExp
-mulExpAtom
-addExp
-addExpAtom
-relExp
-relExpAtom
-eqExp
-eqExpAtom
-assignExp
-assignExpAtom
-constExp
-```
-
-### 4. First 集合
-
-```
-First列表结果如下: --------------------
-总共有 68 条数据
-
-argFunctionR   [,]
-<=   [<=]
-decl   [const, int]
-constInitVal   [+, -, !, Ident, (, INT]
-constDef   [Ident]
-compUnit   [const, void, int]
-addExp   [+, -, !, Ident, (, INT]
-unaryOp   [+, -, !]
-program   [const, void, int]
-addExpAtom   [+, -]
-mulExpAtom   [*, /, %]
-relExp   [+, -, !, Ident, (, INT]
-argVarDecl   [,]
-number   [INT]
-eqExp   [+, -, !, Ident, (, INT]
-funcFParams   [int]
-block   [{]
-mulExp   [+, -, !, Ident, (, INT]
-argExp   [+, -, !, Ident, (, INT]
-exp   [+, -, !, Ident, (, INT]
-constExp   [+, -, !, Ident, (, INT]
-==   [==]
-!   [!]
-void   [void]
-assignExp   [+, -, !, Ident, (, INT]
-%   [%]
-lVal   [Ident]
-(   [(]
-)   [)]
-*   [*]
-assignExpAtom   [=]
-+   [+]
-,   [,]
--   [-]
-/   [/]
-bType   [int]
-unaryExp   [+, -, !, Ident, (, INT]
-varDef   [Ident]
-primaryExp   [(, INT]
-;   [;]
-blockItem   [const, ;, {, return, int, +, -, !, Ident, (, INT]
-<   [<]
-!=   [!=]
-=   [=]
->   [>]
->=   [>=]
-funcDef   [void]
-eqExpAtom   [==, !=]
-const   [const]
-funcRParam   [+, -, !, Ident, (, INT]
-INT   [INT]
-funcRParams   [+, -, !, Ident, (, INT]
-initVal   [+, -, !, Ident, (, INT]
-argConst   [,]
-funcType   [void]
-Ident   [Ident]
-relExpAtom   [<, >, <=, >=]
-constDecl   [const]
-callFunc   [(]
-int   [int]
-argVarDef   [=]
-funcFParam   [int]
-{   [{]
-argFunctionF   [,]
-}   [}]
-varDecl   [int]
-return   [return]
-stmt   [;, {, return, +, -, !, Ident, (, INT]
-```
-
-### 5. Follow 集合
-
-```
-Follow列表结果如下: --------------------
-总共有 43 条数据
-
-argFunctionR   [), #]
-eqExpAtom   [=, ,, ;, ), #]
-decl   [const, void, int, ;, {, return, +, -, !, Ident, (, INT, }, #]
-constInitVal   [,, ;, #]
-constDef   [,, ;, #]
-compUnit   [#]
-funcRParam   [,, ), #]
-addExp   [<, >, <=, >=, ==, !=, =, ,, ;, ), #]
-unaryOp   [+, -, !, Ident, (, INT, #]
-program   [#]
-addExpAtom   [<, >, <=, >=, ==, !=, =, ,, ;, ), #]
-mulExpAtom   [+, -, <, >, <=, >=, ==, !=, =, ,, ;, ), #]
-relExp   [==, !=, =, ,, ;, ), #]
-funcRParams   [), #]
-argVarDecl   [;, #]
-initVal   [,, ;, #]
-number   [*, /, %, +, -, <, >, <=, >=, ==, !=, =, ,, ;, ), #]
-argConst   [;, #]
-eqExp   [=, ,, ;, ), #]
-funcFParams   [), #]
-block   [const, void, int, ;, {, return, +, -, !, Ident, (, INT, }, #]
-mulExp   [+, -, <, >, <=, >=, ==, !=, =, ,, ;, ), #]
-argExp   [;, #]
-exp   [,, ;, ), #]
-constExp   [,, ;, #]
-funcType   [Ident, #]
-assignExp   [,, ;, ), #]
-relExpAtom   [==, !=, =, ,, ;, ), #]
-lVal   [#]
-constDecl   [const, void, int, ;, {, return, +, -, !, Ident, (, INT, }, #]
-assignExpAtom   [,, ;, ), #]
-callFunc   [*, /, %, +, -, <, >, <=, >=, ==, !=, =, ,, ;, ), #]
-bType   [Ident, #]
-unaryExp   [*, /, %, +, -, <, >, <=, >=, ==, !=, =, ,, ;, ), #]
-argVarDef   [,, ;, #]
-funcFParam   [,, ), #]
-varDef   [,, ;, #]
-primaryExp   [*, /, %, +, -, <, >, <=, >=, ==, !=, =, ,, ;, ), #]
-blockItem   [}, #]
-argFunctionF   [), #]
-varDecl   [const, void, int, ;, {, return, +, -, !, Ident, (, INT, }, #]
-stmt   [const, ;, {, return, int, +, -, !, Ident, (, INT, }, #]
-funcDef   [const, void, int, #]
-```
-
-### 6. 分析表
-
-```
-预测表结果如下: --------------------
-总共有 217 条数据
-
-{横坐标: Ident   纵坐标: blockItem}    文法: blockItem->[stmt, blockItem]
-{横坐标: !   纵坐标: relExp}    文法: relExp->[addExp, relExpAtom]
-{横坐标: #   纵坐标: funcFParams}    文法: funcFParams->[$]
-{横坐标: void   纵坐标: funcType}    文法: funcType->[void]
-{横坐标: const   纵坐标: constDecl}    文法: constDecl->[const, bType, constDef, argConst, ;]
-{横坐标: <   纵坐标: addExpAtom}    文法: addExpAtom->[$]
-{横坐标: const   纵坐标: compUnit}    文法: compUnit->[decl, compUnit]
-{横坐标: +   纵坐标: unaryExp}    文法: unaryExp->[unaryOp, unaryExp]
-{横坐标: )   纵坐标: addExpAtom}    文法: addExpAtom->[$]
-{横坐标: )   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: >=   纵坐标: addExpAtom}    文法: addExpAtom->[$]
-{横坐标: -   纵坐标: stmt}    文法: stmt->[exp, ;]
-{横坐标: (   纵坐标: constInitVal}    文法: constInitVal->[constExp]
-{横坐标: +   纵坐标: mulExp}    文法: mulExp->[unaryExp, mulExpAtom]
-{横坐标: !   纵坐标: funcRParams}    文法: funcRParams->[funcRParam, argFunctionR]
-{横坐标: ,   纵坐标: addExpAtom}    文法: addExpAtom->[$]
-{横坐标: Ident   纵坐标: addExp}    文法: addExp->[mulExp, addExpAtom]
-{横坐标: +   纵坐标: constExp}    文法: constExp->[assignExp]
-{横坐标: Ident   纵坐标: lVal}    文法: lVal->[Ident]
-{横坐标: ;   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: ,   纵坐标: argFunctionF}    文法: argFunctionF->[,, funcFParam, argFunctionF]
-{横坐标: !=   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: #   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: +   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: >   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: +   纵坐标: unaryOp}    文法: unaryOp->[+]
-{横坐标: }   纵坐标: blockItem}    文法: blockItem->[$]
-{横坐标: !=   纵坐标: addExpAtom}    文法: addExpAtom->[$]
-{横坐标: !   纵坐标: eqExp}    文法: eqExp->[relExp, eqExpAtom]
-{横坐标: Ident   纵坐标: varDef}    文法: varDef->[Ident, argVarDef]
-{横坐标: -   纵坐标: argExp}    文法: argExp->[exp]
-{横坐标: (   纵坐标: blockItem}    文法: blockItem->[stmt, blockItem]
-{横坐标: (   纵坐标: primaryExp}    文法: primaryExp->[(, exp, )]
-{横坐标: INT   纵坐标: addExp}    文法: addExp->[mulExp, addExpAtom]
-{横坐标: )   纵坐标: relExpAtom}    文法: relExpAtom->[$]
-{横坐标: const   纵坐标: program}    文法: program->[compUnit]
-{横坐标: !   纵坐标: assignExp}    文法: assignExp->[eqExp, assignExpAtom]
-{横坐标: int   纵坐标: decl}    文法: decl->[varDecl]
-{横坐标: void   纵坐标: compUnit}    文法: compUnit->[funcDef, compUnit]
-{横坐标: #   纵坐标: relExpAtom}    文法: relExpAtom->[$]
-{横坐标: %   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: ,   纵坐标: argConst}    文法: argConst->[,, constDef, argConst]
-{横坐标: INT   纵坐标: assignExp}    文法: assignExp->[eqExp, assignExpAtom]
-{横坐标: (   纵坐标: funcRParam}    文法: funcRParam->[exp]
-{横坐标: (   纵坐标: relExp}    文法: relExp->[addExp, relExpAtom]
-{横坐标: INT   纵坐标: unaryExp}    文法: unaryExp->[primaryExp]
-{横坐标: ;   纵坐标: blockItem}    文法: blockItem->[stmt, blockItem]
-{横坐标: #   纵坐标: eqExpAtom}    文法: eqExpAtom->[$]
-{横坐标: ;   纵坐标: eqExpAtom}    文法: eqExpAtom->[$]
-{横坐标: <   纵坐标: relExpAtom}    文法: relExpAtom->[<, addExp, relExpAtom]
-{横坐标: ;   纵坐标: relExpAtom}    文法: relExpAtom->[$]
-{横坐标: -   纵坐标: funcRParam}    文法: funcRParam->[exp]
-{横坐标: (   纵坐标: funcRParams}    文法: funcRParams->[funcRParam, argFunctionR]
-{横坐标: +   纵坐标: funcRParam}    文法: funcRParam->[exp]
-{横坐标: >   纵坐标: relExpAtom}    文法: relExpAtom->[>, addExp, relExpAtom]
-{横坐标: #   纵坐标: blockItem}    文法: blockItem->[$]
-{横坐标: >=   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: +   纵坐标: addExp}    文法: addExp->[mulExp, addExpAtom]
-{横坐标: Ident   纵坐标: initVal}    文法: initVal->[exp]
-{横坐标: )   纵坐标: funcFParams}    文法: funcFParams->[$]
-{横坐标: #   纵坐标: addExpAtom}    文法: addExpAtom->[$]
-{横坐标: *   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: ,   纵坐标: assignExpAtom}    文法: assignExpAtom->[$]
-{横坐标: Ident   纵坐标: mulExp}    文法: mulExp->[unaryExp, mulExpAtom]
-{横坐标: >   纵坐标: addExpAtom}    文法: addExpAtom->[$]
-{横坐标: (   纵坐标: unaryExp}    文法: unaryExp->[primaryExp]
-{横坐标: {   纵坐标: blockItem}    文法: blockItem->[stmt, blockItem]
-{横坐标: INT   纵坐标: argExp}    文法: argExp->[exp]
-{横坐标: #   纵坐标: argVarDef}    文法: argVarDef->[$]
-{横坐标: {   纵坐标: block}    文法: block->[{, blockItem, }]
-{横坐标: !   纵坐标: constExp}    文法: constExp->[assignExp]
-{横坐标: >   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: -   纵坐标: constInitVal}    文法: constInitVal->[constExp]
-{横坐标: ;   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: -   纵坐标: assignExp}    文法: assignExp->[eqExp, assignExpAtom]
-{横坐标: %   纵坐标: mulExpAtom}    文法: mulExpAtom->[%, unaryExp, mulExpAtom]
-{横坐标: <   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: +   纵坐标: addExpAtom}    文法: addExpAtom->[+, mulExp, addExpAtom]
-{横坐标: +   纵坐标: argExp}    文法: argExp->[exp]
-{横坐标: ;   纵坐标: argVarDef}    文法: argVarDef->[$]
-{横坐标: INT   纵坐标: mulExp}    文法: mulExp->[unaryExp, mulExpAtom]
-{横坐标: -   纵坐标: blockItem}    文法: blockItem->[stmt, blockItem]
-{横坐标: const   纵坐标: decl}    文法: decl->[constDecl]
-{横坐标: +   纵坐标: eqExp}    文法: eqExp->[relExp, eqExpAtom]
-{横坐标: int   纵坐标: varDecl}    文法: varDecl->[bType, varDef, argVarDecl, ;]
-{横坐标: ,   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: )   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: int   纵坐标: blockItem}    文法: blockItem->[decl, blockItem]
-{横坐标: ,   纵坐标: argFunctionR}    文法: argFunctionR->[,, funcRParam, argFunctionR]
-{横坐标: Ident   纵坐标: funcRParam}    文法: funcRParam->[exp]
-{横坐标: INT   纵坐标: eqExp}    文法: eqExp->[relExp, eqExpAtom]
-{横坐标: -   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: {   纵坐标: stmt}    文法: stmt->[block]
-{横坐标: )   纵坐标: assignExpAtom}    文法: assignExpAtom->[$]
-{横坐标: (   纵坐标: exp}    文法: exp->[assignExp]
-{横坐标: -   纵坐标: constExp}    文法: constExp->[assignExp]
-{横坐标: -   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: Ident   纵坐标: assignExp}    文法: assignExp->[eqExp, assignExpAtom]
-{横坐标: INT   纵坐标: initVal}    文法: initVal->[exp]
-{横坐标: =   纵坐标: addExpAtom}    文法: addExpAtom->[$]
-{横坐标: ;   纵坐标: addExpAtom}    文法: addExpAtom->[$]
-{横坐标: ;   纵坐标: assignExpAtom}    文法: assignExpAtom->[$]
-{横坐标: #   纵坐标: argExp}    文法: argExp->[$]
-{横坐标: INT   纵坐标: stmt}    文法: stmt->[exp, ;]
-{横坐标: ;   纵坐标: argConst}    文法: argConst->[$]
-{横坐标: INT   纵坐标: funcRParams}    文法: funcRParams->[funcRParam, argFunctionR]
-{横坐标: +   纵坐标: constInitVal}    文法: constInitVal->[constExp]
-{横坐标: (   纵坐标: addExp}    文法: addExp->[mulExp, addExpAtom]
-{横坐标: +   纵坐标: initVal}    文法: initVal->[exp]
-{横坐标: (   纵坐标: initVal}    文法: initVal->[exp]
-{横坐标: !   纵坐标: stmt}    文法: stmt->[exp, ;]
-{横坐标: #   纵坐标: funcRParams}    文法: funcRParams->[$]
-{横坐标: #   纵坐标: argFunctionR}    文法: argFunctionR->[$]
-{横坐标: !=   纵坐标: relExpAtom}    文法: relExpAtom->[$]
-{横坐标: Ident   纵坐标: exp}    文法: exp->[assignExp]
-{横坐标: !   纵坐标: addExp}    文法: addExp->[mulExp, addExpAtom]
-{横坐标: -   纵坐标: eqExp}    文法: eqExp->[relExp, eqExpAtom]
-{横坐标: int   纵坐标: program}    文法: program->[compUnit]
-{横坐标: -   纵坐标: funcRParams}    文法: funcRParams->[funcRParam, argFunctionR]
-{横坐标: #   纵坐标: compUnit}    文法: compUnit->[$]
-{横坐标: =   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: )   纵坐标: argFunctionR}    文法: argFunctionR->[$]
-{横坐标: (   纵坐标: mulExp}    文法: mulExp->[unaryExp, mulExpAtom]
-{横坐标: +   纵坐标: relExp}    文法: relExp->[addExp, relExpAtom]
-{横坐标: !=   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: int   纵坐标: compUnit}    文法: compUnit->[decl, compUnit]
-{横坐标: -   纵坐标: unaryOp}    文法: unaryOp->[-]
-{横坐标: INT   纵坐标: number}    文法: number->[INT]
-{横坐标: Ident   纵坐标: constExp}    文法: constExp->[assignExp]
-{横坐标: -   纵坐标: addExpAtom}    文法: addExpAtom->[-, mulExp, addExpAtom]
-{横坐标: ==   纵坐标: addExpAtom}    文法: addExpAtom->[$]
-{横坐标: !   纵坐标: mulExp}    文法: mulExp->[unaryExp, mulExpAtom]
-{横坐标: =   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: -   纵坐标: unaryExp}    文法: unaryExp->[unaryOp, unaryExp]
-{横坐标: INT   纵坐标: relExp}    文法: relExp->[addExp, relExpAtom]
-{横坐标: +   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: Ident   纵坐标: eqExp}    文法: eqExp->[relExp, eqExpAtom]
-{横坐标: +   纵坐标: funcRParams}    文法: funcRParams->[funcRParam, argFunctionR]
-{横坐标: *   纵坐标: mulExpAtom}    文法: mulExpAtom->[*, unaryExp, mulExpAtom]
-{横坐标: -   纵坐标: addExp}    文法: addExp->[mulExp, addExpAtom]
-{横坐标: INT   纵坐标: funcRParam}    文法: funcRParam->[exp]
-{横坐标: ,   纵坐标: eqExpAtom}    文法: eqExpAtom->[$]
-{横坐标: /   纵坐标: mulExpAtom}    文法: mulExpAtom->[/, unaryExp, mulExpAtom]
-{横坐标: (   纵坐标: argExp}    文法: argExp->[exp]
-{横坐标: /   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: INT   纵坐标: constInitVal}    文法: constInitVal->[constExp]
-{横坐标: !   纵坐标: constInitVal}    文法: constInitVal->[constExp]
-{横坐标: Ident   纵坐标: relExp}    文法: relExp->[addExp, relExpAtom]
-{横坐标: return   纵坐标: stmt}    文法: stmt->[return, argExp, ;]
-{横坐标: ,   纵坐标: argVarDef}    文法: argVarDef->[$]
-{横坐标: <=   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: !   纵坐标: unaryOp}    文法: unaryOp->[!]
-{横坐标: !   纵坐标: initVal}    文法: initVal->[exp]
-{横坐标: void   纵坐标: funcDef}    文法: funcDef->[funcType, Ident, (, funcFParams, ), block]
-{横坐标: )   纵坐标: funcRParams}    文法: funcRParams->[$]
-{横坐标: ,   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: #   纵坐标: assignExpAtom}    文法: assignExpAtom->[$]
-{横坐标: Ident   纵坐标: constInitVal}    文法: constInitVal->[constExp]
-{横坐标: (   纵坐标: stmt}    文法: stmt->[exp, ;]
-{横坐标: (   纵坐标: assignExp}    文法: assignExp->[eqExp, assignExpAtom]
-{横坐标: Ident   纵坐标: argExp}    文法: argExp->[exp]
-{横坐标: <   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: =   纵坐标: relExpAtom}    文法: relExpAtom->[$]
-{横坐标: =   纵坐标: argVarDef}    文法: argVarDef->[=, initVal]
-{横坐标: INT   纵坐标: blockItem}    文法: blockItem->[stmt, blockItem]
-{横坐标: #   纵坐标: argFunctionF}    文法: argFunctionF->[$]
-{横坐标: Ident   纵坐标: unaryExp}    文法: unaryExp->[Ident, callFunc]
-{横坐标: !   纵坐标: unaryExp}    文法: unaryExp->[unaryOp, unaryExp]
-{横坐标: !   纵坐标: funcRParam}    文法: funcRParam->[exp]
-{横坐标: const   纵坐标: blockItem}    文法: blockItem->[decl, blockItem]
-{横坐标: Ident   纵坐标: funcRParams}    文法: funcRParams->[funcRParam, argFunctionR]
-{横坐标: -   纵坐标: mulExp}    文法: mulExp->[unaryExp, mulExpAtom]
-{横坐标: +   纵坐标: blockItem}    文法: blockItem->[stmt, blockItem]
-{横坐标: ==   纵坐标: relExpAtom}    文法: relExpAtom->[$]
-{横坐标: INT   纵坐标: exp}    文法: exp->[assignExp]
-{横坐标: =   纵坐标: assignExpAtom}    文法: assignExpAtom->[=, eqExp, assignExpAtom]
-{横坐标: (   纵坐标: eqExp}    文法: eqExp->[relExp, eqExpAtom]
-{横坐标: ,   纵坐标: relExpAtom}    文法: relExpAtom->[$]
-{横坐标: return   纵坐标: blockItem}    文法: blockItem->[stmt, blockItem]
-{横坐标: INT   纵坐标: primaryExp}    文法: primaryExp->[number]
-{横坐标: #   纵坐标: argVarDecl}    文法: argVarDecl->[$]
-{横坐标: #   纵坐标: argConst}    文法: argConst->[$]
-{横坐标: )   纵坐标: argFunctionF}    文法: argFunctionF->[$]
-{横坐标: ==   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: =   纵坐标: eqExpAtom}    文法: eqExpAtom->[$]
-{横坐标: !   纵坐标: argExp}    文法: argExp->[exp]
-{横坐标: -   纵坐标: initVal}    文法: initVal->[exp]
-{横坐标: -   纵坐标: relExp}    文法: relExp->[addExp, relExpAtom]
-{横坐标: int   纵坐标: funcFParam}    文法: funcFParam->[bType, Ident]
-{横坐标: void   纵坐标: program}    文法: program->[compUnit]
-{横坐标: !   纵坐标: blockItem}    文法: blockItem->[stmt, blockItem]
-{横坐标: (   纵坐标: callFunc}    文法: callFunc->[(, funcRParams, )]
-{横坐标: (   纵坐标: constExp}    文法: constExp->[assignExp]
-{横坐标: ;   纵坐标: stmt}    文法: stmt->[;]
-{横坐标: ;   纵坐标: argExp}    文法: argExp->[$]
-{横坐标: int   纵坐标: funcFParams}    文法: funcFParams->[funcFParam, argFunctionF]
-{横坐标: ;   纵坐标: argVarDecl}    文法: argVarDecl->[$]
-{横坐标: #   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: >=   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: <=   纵坐标: relExpAtom}    文法: relExpAtom->[<=, addExp, relExpAtom]
-{横坐标: -   纵坐标: exp}    文法: exp->[assignExp]
-{横坐标: <=   纵坐标: addExpAtom}    文法: addExpAtom->[$]
-{横坐标: ==   纵坐标: eqExpAtom}    文法: eqExpAtom->[==, relExp, eqExpAtom]
-{横坐标: +   纵坐标: assignExp}    文法: assignExp->[eqExp, assignExpAtom]
-{横坐标: ,   纵坐标: argVarDecl}    文法: argVarDecl->[,, varDef, argVarDecl]
-{横坐标: Ident   纵坐标: stmt}    文法: stmt->[exp, ;]
-{横坐标: +   纵坐标: exp}    文法: exp->[assignExp]
-{横坐标: <=   纵坐标: mulExpAtom}    文法: mulExpAtom->[$]
-{横坐标: >=   纵坐标: relExpAtom}    文法: relExpAtom->[>=, addExp, relExpAtom]
-{横坐标: +   纵坐标: stmt}    文法: stmt->[exp, ;]
-{横坐标: !=   纵坐标: eqExpAtom}    文法: eqExpAtom->[!=, relExp, eqExpAtom]
-{横坐标: !   纵坐标: exp}    文法: exp->[assignExp]
-{横坐标: INT   纵坐标: constExp}    文法: constExp->[assignExp]
-{横坐标: int   纵坐标: bType}    文法: bType->[int]
-{横坐标: ==   纵坐标: callFunc}    文法: callFunc->[$]
-{横坐标: Ident   纵坐标: constDef}    文法: constDef->[Ident, =, constInitVal]
-{横坐标: )   纵坐标: eqExpAtom}    文法: eqExpAtom->[$]
-```
+## 三、输出的一些表在文件的output文件夹中
