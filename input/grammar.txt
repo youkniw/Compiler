@@ -88,5 +88,3 @@ structType -> struct Ident
 structVarDecl -> Ident structVarDeclList
 structVarDeclList -> , Ident structVarDeclList
 structVarDeclList -> $
-
-
