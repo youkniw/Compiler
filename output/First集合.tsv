@@ -1,0 +1,76 @@
+const	const
+;	;
+,	,
+Ident	Ident
+=	=
+int	int
+(	(
+)	)
+void	void
+{	{
+}	}
+return	return
+INT	INT
++	+
+-	-
+!	!
+*	*
+/	/
+%	%
+<	<
+>	>
+<=	<=
+>=	>=
+==	==
+!=	!=
+struct	struct
+program	const, struct, void, int
+compUnit	const, struct, void, int
+decl	const, struct, int
+constDecl	const
+argConst	,
+constDef	Ident
+constInitVal	+, -, !, Ident, (, INT
+varDecl	int, struct
+argVarDecl	,
+varDef	Ident
+argVarDef	=
+initVal	+, -, !, Ident, (, INT
+bType	int, struct
+funcDef	void
+funcType	void
+funcFParams	int, struct
+argFunctionF	,
+funcFParam	int, struct
+block	{
+blockItem	const, struct, ;, {, return, int, +, -, !, Ident, (, INT
+stmt	;, {, return, +, -, !, Ident, (, INT
+argExp	+, -, !, Ident, (, INT
+exp	+, -, !, Ident, (, INT
+lVal	Ident
+primaryExp	(, INT
+number	INT
+unaryOp	+, -, !
+unaryExp	+, -, !, Ident, (, INT
+callFunc	(
+funcRParams	+, -, !, Ident, (, INT
+argFunctionR	,
+funcRParam	+, -, !, Ident, (, INT
+mulExp	+, -, !, Ident, (, INT
+mulExpAtom	*, /, %
+addExp	+, -, !, Ident, (, INT
+addExpAtom	+, -
+relExp	+, -, !, Ident, (, INT
+relExpAtom	<, >, <=, >=
+eqExp	+, -, !, Ident, (, INT
+eqExpAtom	==, !=
+assignExp	+, -, !, Ident, (, INT
+assignExpAtom	=
+constExp	+, -, !, Ident, (, INT
+structDecl	struct
+structVarDeclOptional	Ident
+structBody	int, void, struct
+structMember	int, void, struct
+structType	struct
+structVarDecl	Ident
+structVarDeclList	,

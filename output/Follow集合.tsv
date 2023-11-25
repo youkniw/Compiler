@@ -1,0 +1,50 @@
+program	#
+compUnit	#
+decl	const, struct, void, int, ;, {, return, +, -, !, Ident, (, INT, }, #
+constDecl	const, struct, void, int, ;, {, return, +, -, !, Ident, (, INT, }, #
+argConst	;, #
+constDef	,, ;, #
+constInitVal	,, ;, #
+varDecl	const, struct, void, int, }, ;, {, return, +, -, !, Ident, (, INT, #
+argVarDecl	;, #
+varDef	,, ;, #
+argVarDef	,, ;, #
+initVal	,, ;, #
+bType	Ident, #
+funcDef	const, struct, void, int, }, #
+funcType	Ident, #
+funcFParams	), #
+argFunctionF	), #
+funcFParam	,, ), #
+block	const, struct, void, int, ;, {, return, +, -, !, Ident, (, INT, }, #
+blockItem	}, #
+stmt	const, struct, ;, {, return, int, +, -, !, Ident, (, INT, }, #
+argExp	;, #
+exp	,, ;, ), #
+lVal	#
+primaryExp	*, /, %, +, -, <, >, <=, >=, ==, !=, =, ,, ;, ), #
+number	*, /, %, +, -, <, >, <=, >=, ==, !=, =, ,, ;, ), #
+unaryOp	+, -, !, Ident, (, INT, #
+unaryExp	*, /, %, +, -, <, >, <=, >=, ==, !=, =, ,, ;, ), #
+callFunc	*, /, %, +, -, <, >, <=, >=, ==, !=, =, ,, ;, ), #
+funcRParams	), #
+argFunctionR	), #
+funcRParam	,, ), #
+mulExp	+, -, <, >, <=, >=, ==, !=, =, ,, ;, ), #
+mulExpAtom	+, -, <, >, <=, >=, ==, !=, =, ,, ;, ), #
+addExp	<, >, <=, >=, ==, !=, =, ,, ;, ), #
+addExpAtom	<, >, <=, >=, ==, !=, =, ,, ;, ), #
+relExp	==, !=, =, ,, ;, ), #
+relExpAtom	==, !=, =, ,, ;, ), #
+eqExp	=, ,, ;, ), #
+eqExpAtom	=, ,, ;, ), #
+assignExp	,, ;, ), #
+assignExpAtom	,, ;, ), #
+constExp	,, ;, #
+structDecl	const, struct, void, int, ;, {, return, +, -, !, Ident, (, INT, }, #
+structVarDeclOptional	;, #
+structBody	}, #
+structMember	int, void, struct, }, #
+structType	Ident, #
+structVarDecl	;, #
+structVarDeclList	;, #
